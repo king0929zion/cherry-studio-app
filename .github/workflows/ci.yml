@@ -153,7 +153,6 @@ jobs:
           BUILD_ID=$(cat android_build.json | jq -r '.[0].id')
           echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "🤖 Android Build ID: $BUILD_ID"
-          echo "🔗 View build: https://expo.dev/accounts/[your-account]/projects/cherry-studio/builds/$BUILD_ID"
 
       - name: Build Summary
         if: steps.check_token.outputs.has_token == 'true' && success()
@@ -163,7 +162,6 @@ jobs:
           echo "### 🤖 Android" >> $GITHUB_STEP_SUMMARY
           echo "- **Build ID**: \`${{ steps.build_android.outputs.build_id }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: 🏗️ Building on EAS" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Details**: [View on Expo](https://expo.dev/accounts/[your-account]/projects/cherry-studio/builds/${{ steps.build_android.outputs.build_id }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📝 Note" >> $GITHUB_STEP_SUMMARY
           echo "Build is running in the background. Check Expo dashboard for progress." >> $GITHUB_STEP_SUMMARY
@@ -177,15 +175,18 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📋 To enable automatic Android builds:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Go to [Expo Access Tokens](https://expo.dev/accounts/[your-account]/settings/access-tokens)" >> $GITHUB_STEP_SUMMARY
-          echo "2. Create a new access token" >> $GITHUB_STEP_SUMMARY
-          echo "3. Add it to GitHub Secrets:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create an Expo account at https://expo.dev" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run \`npx expo login\` locally and login" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update \`app.config.ts\` with your own Expo project ID" >> $GITHUB_STEP_SUMMARY
+          echo "4. Go to https://expo.dev/accounts/[your-account]/settings/access-tokens" >> $GITHUB_STEP_SUMMARY
+          echo "5. Create a new access token" >> $GITHUB_STEP_SUMMARY
+          echo "6. Add it to GitHub Secrets:" >> $GITHUB_STEP_SUMMARY
           echo "   - Go to: Settings → Secrets and variables → Actions" >> $GITHUB_STEP_SUMMARY
           echo "   - Click 'New repository secret'" >> $GITHUB_STEP_SUMMARY
           echo "   - Name: \`EXPO_TOKEN\`" >> $GITHUB_STEP_SUMMARY
           echo "   - Value: [paste your token]" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📚 [Learn more about Expo tokens](https://docs.expo.dev/accounts/programmatic-access/)" >> $GITHUB_STEP_SUMMARY
+          echo "📚 [Learn more](https://docs.expo.dev/accounts/programmatic-access/)" >> $GITHUB_STEP_SUMMARY
 
       - name: Build Failure Summary
         if: steps.check_token.outputs.has_token == 'true' && failure()

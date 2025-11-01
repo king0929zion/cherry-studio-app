@@ -110,14 +110,21 @@
   - 在每次推送到 main 分支时自动运行：
     - 代码检查（类型检查、代码规范、格式检查、国际化检查）
     - 构建验证（Drizzle 迁移、Android prebuild）
-    - **自动构建 Android APK**（使用 EAS Build）
+    - 自动构建 Android APK（如果配置了 EXPO_TOKEN）
   - 禁用 immutable lockfile 模式（添加环境变量 `YARN_ENABLE_IMMUTABLE_INSTALLS: false`）
-  - Android 构建异步执行，不等待完成
-  - EXPO_TOKEN 已配置，Android 自动构建已启用
+  - **智能跳过**：如果未配置 EXPO_TOKEN，会跳过构建并显示配置指南
+  
+- **配置自动构建（已完成项目 ID 配置）**：
+  1. ✅ 已更新 `app.config.ts` 中的项目 ID 为 `e6476602-ffbc-461c-9f4f-a20637a692f1`
+  2. ✅ 已更新 updates URL
+  3. ⏳ 待配置：生成 Access Token 并添加到 GitHub Secrets
+     - 生成 token：https://expo.dev/accounts/[your-account]/settings/access-tokens
+     - 添加到 GitHub Secrets：
+       - 仓库设置 → Secrets and variables → Actions
+       - 新建 secret：名称 `EXPO_TOKEN`，值为你的 token
   
 - **发布构建**：
   - Android 和 iOS 的发布 workflow（通过 tag 触发）
-  - iOS 暂不自动构建，仅在手动创建 tag 时触发
   - 使用 EAS Build 构建应用
   - 自动创建 GitHub Release
 
