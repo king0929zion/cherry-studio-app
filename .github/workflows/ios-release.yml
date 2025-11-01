@@ -43,7 +43,9 @@ jobs:
 
       # Step 5: Install dependencies
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
 
       # Step 6: Get version tag
       - name: Get version tag
