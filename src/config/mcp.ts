@@ -248,7 +248,7 @@ export const BUILTIN_TOOLS: Record<BuiltinMcpId, MCPTool[]> = {
         required: ['reminderId']
       }
     }
-  ]
+  ],
   '@cherry/files': [
     {
       id: uuid(),
