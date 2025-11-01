@@ -1,5 +1,5 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import React, { useRef } from 'react'
+import React, { useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, TouchableOpacity } from 'react-native'
 
@@ -32,7 +32,7 @@ const DISPLAY_CONSTANTS = {
   MAX_VISIBLE_MODELS: 3
 } as const
 
-export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMentions, assistant, updateAssistant }) => {
+const MentionButtonComponent: React.FC<MentionButtonProps> = ({ mentions, setMentions, assistant, updateAssistant }) => {
   const { t } = useTranslation()
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
   const [modelDisplayMode] = usePreference('ui.model_display_mode')
@@ -62,9 +62,9 @@ export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMenti
     await updateAssistant(updatedAssistant)
   }
 
-  const renderEmptyState = () => <AtSign size={DISPLAY_CONSTANTS.ICON_SIZE} />
+  const renderEmptyState = useCallback(() => <AtSign size={DISPLAY_CONSTANTS.ICON_SIZE} />, [])
 
-  const renderSingleModel = (model: Model) => (
+  const renderSingleModel = useCallback((model: Model) => (
     <XStack className={`${BUTTON_STYLES.container} justify-center`}>
       <ModelIcon model={model} size={DISPLAY_CONSTANTS.MODEL_ICON_SIZE} />
       {modelDisplayMode === 'full' && (
@@ -73,9 +73,9 @@ export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMenti
         </Text>
       )}
     </XStack>
-  )
+  ), [modelDisplayMode])
 
-  const renderMultipleModels = () => (
+  const renderMultipleModels = useCallback(() => (
     <XStack className={`${BUTTON_STYLES.container} justify-center`}>
       {mentions.slice(0, DISPLAY_CONSTANTS.MAX_VISIBLE_MODELS).map((mention, index) => (
         <ModelIcon key={index} model={mention} size={DISPLAY_CONSTANTS.MODEL_ICON_SIZE} />
@@ -84,21 +84,23 @@ export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMenti
         <Text className={BUTTON_STYLES.text}>{t('inputs.mentions', { number: mentions.length })}</Text>
       )}
     </XStack>
-  )
+  ), [mentions, modelDisplayMode, t])
 
-  const renderButtonContent = () => {
+  const renderButtonContent = useMemo(() => {
     if (mentions.length === 0) return renderEmptyState()
     if (mentions.length === 1) return renderSingleModel(mentions[0])
     return renderMultipleModels()
-  }
+  }, [mentions, renderEmptyState, renderSingleModel, renderMultipleModels])
 
   return (
     <>
       <TouchableOpacity style={{ maxWidth: BUTTON_STYLES.maxWidth }} onPress={handlePress} hitSlop={5}>
-        {renderButtonContent()}
+        {renderButtonContent}
       </TouchableOpacity>
 
       <ModelSheet ref={bottomSheetModalRef} mentions={mentions} setMentions={handleModelChange} multiple={true} />
     </>
   )
 }
+
+export const MentionButton = React.memo(MentionButtonComponent)

@@ -64,14 +64,27 @@
     - `src/navigators/settings/GeneralSettingsStackNavigator.tsx`
 
 ### 国际化翻译（完成）
-- 为所有语言添加模型展示模式相关翻译
+- 为中英文添加模型展示模式相关翻译
   - 中文（简体）：完整名称 / 仅图标 / 模型显示
-  - 中文（繁体）：完整名稱 / 僅圖標 / 模型顯示
   - 英文：Full Name / Icon Only / Model Display
-  - 日语：完全な名前 / アイコンのみ / モデル表示
-  - 俄语：Полное название / Только иконка / Отображение модели
   - 翻译路径：`settings.general.model_display.*`
-  - 涉及文件：`src/i18n/locales/*.json`（全部5种语言）
+  - 涉及文件：`src/i18n/locales/zh-cn.json`, `src/i18n/locales/en-us.json`
+
+### 性能优化（完成）
+- **组件渲染优化**：
+  - 使用 `React.memo` 包装组件，避免不必要的重渲染
+    - `MentionButton` 组件
+    - `SystemTools` 组件
+  - 使用 `useMemo` 缓存计算结果，减少重复计算
+    - 选项列表的创建
+    - 渲染内容的计算
+  - 使用 `useCallback` 包装事件处理函数，避免每次渲染创建新函数
+    - 点击事件处理
+    - 渲染函数
+  - 涉及文件：
+    - `src/componentsV2/features/ChatScreen/MessageInput/MentionButton.tsx`
+    - `src/componentsV2/features/Sheet/ToolSheet/SystemTools.tsx`
+    - `src/screens/settings/general/ModelDisplaySettingsScreen.tsx`
 
 ## 尚待完成/注意事项
 

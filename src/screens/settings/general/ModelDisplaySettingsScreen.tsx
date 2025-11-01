@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Container, HeaderBar, PressableRow, SafeAreaContainer, Text, XStack, YStack } from '@/componentsV2'
@@ -14,7 +14,7 @@ export default function ModelDisplaySettingsScreen() {
   const { t } = useTranslation()
   const [modelDisplayMode, setModelDisplayMode] = usePreference('ui.model_display_mode')
 
-  const modelDisplayOptions: ModelDisplayOption[] = [
+  const modelDisplayOptions: ModelDisplayOption[] = useMemo(() => [
     {
       value: 'full',
       label: 'settings.general.model_display.full'
@@ -23,7 +23,11 @@ export default function ModelDisplaySettingsScreen() {
       value: 'icon',
       label: 'settings.general.model_display.icon'
     }
-  ]
+  ], [])
+
+  const handleOptionPress = useCallback((value: ModelDisplayMode) => {
+    setModelDisplayMode(value).catch(console.error)
+  }, [setModelDisplayMode])
 
   return (
     <SafeAreaContainer className="flex-1">
@@ -33,7 +37,7 @@ export default function ModelDisplaySettingsScreen() {
           {modelDisplayOptions.map(opt => (
             <PressableRow
               key={opt.value}
-              onPress={() => setModelDisplayMode(opt.value).catch(console.error)}
+              onPress={() => handleOptionPress(opt.value)}
               className="bg-ui-card-background dark:bg-ui-card-background-dark p-4 rounded-xl">
               <XStack className="items-center">
                 <Text className="text-base">{t(opt.label)}</Text>

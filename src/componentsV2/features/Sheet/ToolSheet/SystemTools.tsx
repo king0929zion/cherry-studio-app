@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from 'heroui-native'
 
@@ -19,10 +19,10 @@ interface SystemToolsProps {
   onFilePress: () => void
 }
 
-export const SystemTools: React.FC<SystemToolsProps> = ({ onCameraPress, onImagePress, onFilePress }) => {
+const SystemToolsComponent: React.FC<SystemToolsProps> = ({ onCameraPress, onImagePress, onFilePress }) => {
   const { t } = useTranslation()
 
-  const options: SystemTool[] = [
+  const options: SystemTool[] = useMemo(() => [
     {
       key: 'camera',
       label: t('common.camera'),
@@ -41,7 +41,7 @@ export const SystemTools: React.FC<SystemToolsProps> = ({ onCameraPress, onImage
       icon: <FolderClosed size={24} className="text-text-primary dark:text-text-primary-dark" />,
       onPress: onFilePress
     }
-  ]
+  ], [t, onCameraPress, onImagePress, onFilePress])
 
   return (
     <XStack className="justify-between gap-3 px-5">
@@ -59,3 +59,5 @@ export const SystemTools: React.FC<SystemToolsProps> = ({ onCameraPress, onImage
     </XStack>
   )
 }
+
+export const SystemTools = React.memo(SystemToolsComponent)

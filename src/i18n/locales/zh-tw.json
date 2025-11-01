@@ -574,11 +574,6 @@
         "language": {
           "title": "語言"
         },
-        "model_display": {
-          "full": "完整名稱",
-          "icon": "僅圖標",
-          "title": "模型顯示"
-        },
         "privacy": {
           "anonymous": "匿名回報錯誤和統計",
           "title": "隱私設定"
