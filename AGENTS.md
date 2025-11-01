@@ -89,13 +89,16 @@
 ### CI/CD 配置（完成）
 - **持续集成 (CI)**：
   - 新增 `.github/workflows/ci.yml` 配置文件
-  - 在每次推送到 main 分支时自动运行代码检查
-  - 包含类型检查、代码规范检查、格式检查、国际化检查
-  - 验证构建是否成功（prebuild Android）
+  - 在每次推送到 main 分支时自动运行：
+    - 代码检查（类型检查、代码规范、格式检查、国际化检查）
+    - 构建验证（Drizzle 迁移、Android prebuild）
+    - **自动构建 Android APK**（使用 EAS Build）
+  - 禁用 immutable lockfile 模式（添加环境变量 `YARN_ENABLE_IMMUTABLE_INSTALLS: false`）
+  - Android 构建异步执行，不等待完成
   
 - **发布构建**：
-  - 已有 Android 和 iOS 的发布 workflow
-  - 通过创建 tag（如 `v1.0.0`）触发自动构建和发布
+  - Android 和 iOS 的发布 workflow（通过 tag 触发）
+  - iOS 暂不自动构建，仅在手动创建 tag 时触发
   - 使用 EAS Build 构建应用
   - 自动创建 GitHub Release
 
