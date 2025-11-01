@@ -31,7 +31,9 @@ export type AppDrawerParamList = {
     | { screen: 'AssistantMarketScreen' }
     | { screen: 'AssistantDetailScreen'; params: { assistantId: string; tab?: string } }
     | undefined
-  Mcp: { screen: 'McpMarketScreen' }
+  Mcp:
+    | { screen: 'McpMarketScreen' }
+    | { screen: 'McpServerEditorScreen'; params?: { serverId?: string } }
 }
 
 // Root Stack Navigator (MainStackNavigator)

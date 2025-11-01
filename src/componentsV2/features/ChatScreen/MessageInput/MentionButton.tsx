@@ -10,6 +10,7 @@ import { getBaseModelName } from '@/utils/naming'
 import XStack from '@/componentsV2/layout/XStack'
 import Text from '@/componentsV2/base/Text'
 import ModelSheet from '../../Sheet/ModelSheet'
+import { usePreference } from '@/hooks/usePreference'
 
 interface MentionButtonProps {
   mentions: Model[]
@@ -34,6 +35,7 @@ const DISPLAY_CONSTANTS = {
 export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMentions, assistant, updateAssistant }) => {
   const { t } = useTranslation()
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+  const [modelDisplayMode] = usePreference('ui.model_display_mode')
 
   const handlePress = () => {
     Keyboard.dismiss()
@@ -65,9 +67,11 @@ export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMenti
   const renderSingleModel = (model: Model) => (
     <XStack className={`${BUTTON_STYLES.container} justify-center`}>
       <ModelIcon model={model} size={DISPLAY_CONSTANTS.MODEL_ICON_SIZE} />
-      <Text className={`max-w-28 ${BUTTON_STYLES.text}`} numberOfLines={1} ellipsizeMode="middle">
-        {getBaseModelName(model.name)}
-      </Text>
+      {modelDisplayMode === 'full' && (
+        <Text className={`max-w-28 ${BUTTON_STYLES.text}`} numberOfLines={1} ellipsizeMode="middle">
+          {getBaseModelName(model.name)}
+        </Text>
+      )}
     </XStack>
   )
 
@@ -76,7 +80,9 @@ export const MentionButton: React.FC<MentionButtonProps> = ({ mentions, setMenti
       {mentions.slice(0, DISPLAY_CONSTANTS.MAX_VISIBLE_MODELS).map((mention, index) => (
         <ModelIcon key={index} model={mention} size={DISPLAY_CONSTANTS.MODEL_ICON_SIZE} />
       ))}
-      <Text className={BUTTON_STYLES.text}>{t('inputs.mentions', { number: mentions.length })}</Text>
+      {modelDisplayMode === 'full' && (
+        <Text className={BUTTON_STYLES.text}>{t('inputs.mentions', { number: mentions.length })}</Text>
+      )}
     </XStack>
   )
 

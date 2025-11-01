@@ -4,10 +4,13 @@ import { getSystemAssistants } from '@/config/assistants'
 import { initBuiltinMcp } from '@/config/mcp'
 import { SYSTEM_PROVIDERS } from '@/config/providers'
 import { getWebSearchProviders } from '@/config/websearchProviders'
+import { DefaultPreferences, PreferenceDescriptions } from '@/shared/data/preference/preferenceSchemas'
 import { storage } from '@/utils'
 import { assistantDatabase, mcpDatabase, providerDatabase, websearchProviderDatabase } from '@database'
 import { db } from '@db'
 import { seedDatabase } from '@db/seeding'
+import { preferenceTable } from '@db/schema'
+import { eq } from 'drizzle-orm'
 
 import { loggerService } from './LoggerService'
 import { preferenceService } from './PreferenceService'
@@ -45,6 +48,35 @@ const APP_DATA_MIGRATIONS: AppDataMigration[] = [
 
       const builtinMcp = initBuiltinMcp()
       await mcpDatabase.upsertMcps(builtinMcp)
+    }
+  },
+  {
+    version: 2,
+    description: 'Add MCP sandbox server and model display preference',
+    migrate: async () => {
+      const fileSandboxServer = initBuiltinMcp().find(server => server.id === '@cherry/files')
+
+      if (fileSandboxServer) {
+        const existing = await mcpDatabase.getMcpById(fileSandboxServer.id)
+        if (!existing) {
+          await mcpDatabase.upsertMcps([fileSandboxServer])
+        }
+      }
+
+      const preferenceKey = 'ui.model_display_mode' as const
+      const existingPreference = await db
+        .select()
+        .from(preferenceTable)
+        .where(eq(preferenceTable.key, preferenceKey))
+        .get()
+
+      if (!existingPreference) {
+        await db.insert(preferenceTable).values({
+          key: preferenceKey,
+          value: DefaultPreferences.default[preferenceKey],
+          description: PreferenceDescriptions[preferenceKey]
+        })
+      }
     }
   }
 ]

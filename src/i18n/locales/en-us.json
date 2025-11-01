@@ -574,6 +574,11 @@
         "language": {
           "title": "Language"
         },
+        "model_display": {
+          "full": "Full Name",
+          "icon": "Icon Only",
+          "title": "Model Display"
+        },
         "privacy": {
           "anonymous": "Anonymous report errors and statistics",
           "title": "Privacy Settings"

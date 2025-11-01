@@ -314,7 +314,9 @@ export const isBuiltinMCPServer = (server: MCPServer): server is BuiltinMCPServe
 export const BuiltinMCPServerNames = {
   fetch: '@cherry/fetch',
   time: '@cherry/time',
-  calendar: '@cherry/calendar'
+  calendar: '@cherry/calendar',
+  reminder: '@cherry/reminder',
+  files: '@cherry/files'
 } as const
 
 export type BuiltinMCPServerName = (typeof BuiltinMCPServerNames)[keyof typeof BuiltinMCPServerNames]

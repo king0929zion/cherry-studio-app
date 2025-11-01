@@ -9,7 +9,8 @@ export const BuiltinMcpIds = {
   '@cherry/fetch': '@cherry/fetch',
   '@cherry/time': '@cherry/time',
   '@cherry/calendar': '@cherry/calendar',
-  '@cherry/reminder': '@cherry/reminder'
+  '@cherry/reminder': '@cherry/reminder',
+  '@cherry/files': '@cherry/files'
 }
 
 export const BUILTIN_TOOLS: Record<BuiltinMcpId, MCPTool[]> = {
@@ -248,6 +249,88 @@ export const BUILTIN_TOOLS: Record<BuiltinMcpId, MCPTool[]> = {
       }
     }
   ]
+  '@cherry/files': [
+    {
+      id: uuid(),
+      name: 'ListSandboxFiles',
+      serverId: uuid(),
+      serverName: '@cherry/files',
+      isBuiltIn: true,
+      type: 'mcp',
+      description: 'List files and folders in the sandbox directory',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'Relative path within the sandbox to list (optional)'
+          }
+        },
+        required: []
+      }
+    },
+    {
+      id: uuid(),
+      name: 'ReadSandboxFile',
+      serverId: uuid(),
+      serverName: '@cherry/files',
+      isBuiltIn: true,
+      type: 'mcp',
+      description: 'Read a text file from the sandbox',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'Relative path to the file (e.g. notes/todo.txt)'
+          }
+        },
+        required: ['path']
+      }
+    },
+    {
+      id: uuid(),
+      name: 'WriteSandboxFile',
+      serverId: uuid(),
+      serverName: '@cherry/files',
+      isBuiltIn: true,
+      type: 'mcp',
+      description: 'Create or overwrite a file in the sandbox',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'Relative path to the file (e.g. notes/todo.txt)'
+          },
+          content: {
+            type: 'string',
+            description: 'File content to write'
+          }
+        },
+        required: ['path', 'content']
+      }
+    },
+    {
+      id: uuid(),
+      name: 'DeleteSandboxEntry',
+      serverId: uuid(),
+      serverName: '@cherry/files',
+      isBuiltIn: true,
+      type: 'mcp',
+      description: 'Delete a file or folder from the sandbox',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'Relative path to the file or folder to delete'
+          }
+        },
+        required: ['path']
+      }
+    }
+  ]
 }
 
 export function initBuiltinMcp(): MCPServer[] {
@@ -279,6 +362,14 @@ export function initBuiltinMcp(): MCPServer[] {
       type: 'inMemory',
       description: t('mcp.builtin.reminder.description'),
       isActive: false
+    },
+    {
+      id: '@cherry/files',
+      name: '@cherry/files',
+      type: 'inMemory',
+      description: t('mcp.builtin.files.description'),
+      isActive: false,
+      shouldConfig: false
     }
   ]
 }

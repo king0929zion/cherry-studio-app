@@ -46,6 +46,7 @@
 
 import { BUILTIN_TOOLS } from '@/config/mcp'
 import { loggerService } from '@/services/LoggerService'
+import { mcpClientManager } from '@/services/McpClientManager'
 import { MCPServer } from '@/types/mcp'
 import { MCPTool } from '@/types/tool'
 import { mcpDatabase } from '@database'
@@ -305,15 +306,31 @@ export class McpService {
         return []
       }
 
-      // Get tools from builtin config (temporary, until MCP protocol is implemented)
-      const tools = BUILTIN_TOOLS[mcpServer.id] || []
+      if (mcpServer.type === 'inMemory') {
+        const builtinTools = BUILTIN_TOOLS[mcpServer.id] || []
 
-      // Filter disabled tools
-      if (mcpServer.disabledTools && mcpServer.disabledTools.length > 0) {
-        return tools.filter((tool) => !mcpServer.disabledTools?.includes(tool.name))
+        if (mcpServer.disabledTools && mcpServer.disabledTools.length > 0) {
+          return builtinTools.filter(tool => !mcpServer.disabledTools?.includes(tool.name))
+        }
+
+        return builtinTools
       }
 
-      return tools
+      if (!mcpServer.isActive) {
+        logger.verbose(`MCP server ${mcpServer.id} is not active, skip fetching tools`)
+        return []
+      }
+
+      const remoteTools = await mcpClientManager.listTools(mcpServer)
+      const filtered = mcpServer.disabledTools?.length
+        ? remoteTools.filter(tool => !mcpServer.disabledTools?.includes(tool.name))
+        : remoteTools
+
+      if (!filtered.length) {
+        logger.verbose(`MCP server ${mcpServer.id} returned empty tool list`)
+      }
+
+      return filtered
     } catch (error) {
       logger.error(`Failed to get MCP tools for ${mcpId}:`, error as Error)
       return []
@@ -405,6 +422,8 @@ export class McpService {
    */
   public async deleteMcpServer(mcpId: string): Promise<void> {
     logger.info('Deleting MCP server (optimistic):', mcpId)
+
+    await mcpClientManager.dispose(mcpId)
 
     // Save old data for rollback
     const oldCachedServer = this.allMcpServersCache.get(mcpId)
@@ -663,6 +682,16 @@ export class McpService {
         ...currentServerData,
         ...updates,
         id: mcpId // Ensure ID is not overwritten
+      }
+
+      const connectionNeedsReset =
+        currentServerData.type !== updatedServer.type ||
+        currentServerData.baseUrl !== updatedServer.baseUrl ||
+        JSON.stringify(currentServerData.headers ?? {}) !== JSON.stringify(updatedServer.headers ?? {}) ||
+        (!!currentServerData.isActive && !updatedServer.isActive)
+
+      if (connectionNeedsReset) {
+        await mcpClientManager.dispose(mcpId)
       }
 
       // Optimistic update: update all caches

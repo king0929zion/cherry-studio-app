@@ -8,5 +8,6 @@ export const mcp = sqliteTable('mcp', {
   description: text('description'),
   is_active: integer('is_active', { mode: 'boolean' }),
   disabled_tools: text('disabled_tools'),
+  config: text('config'),
   ...createUpdateTimestamps
 })

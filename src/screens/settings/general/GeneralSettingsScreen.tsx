@@ -18,12 +18,14 @@ import { languagesOptions } from '@/config/languages'
 import { GeneralSettingsNavigationProps } from '@/types/naviagate'
 import { storage } from '@/utils'
 import { useTheme } from '@/hooks/useTheme'
+import { usePreference } from '@/hooks/usePreference'
 
 export default function GeneralSettingsScreen() {
   const { t, i18n } = useTranslation()
 
   const [language, setLanguage] = useState('zh-CN')
   const { themeSetting } = useTheme()
+  const [modelDisplayMode] = usePreference('ui.model_display_mode')
 
   const navigation = useNavigation<GeneralSettingsNavigationProps>()
 
@@ -64,6 +66,17 @@ export default function GeneralSettingsScreen() {
                 <XStack className="items-center gap-2">
                   <Text className="text-gray-500">
                     {t(`settings.general.theme.${themeSetting === 'system' ? 'auto' : themeSetting}`)}
+                  </Text>
+                  <RowRightArrow />
+                </XStack>
+              </PressableRow>
+              <PressableRow onPress={() => navigation.navigate('ModelDisplaySettingsScreen')}>
+                <XStack className="items-center">
+                  <Text className="text-lg">{t('settings.general.model_display.title')}</Text>
+                </XStack>
+                <XStack className="items-center gap-2">
+                  <Text className="text-gray-500">
+                    {t(`settings.general.model_display.${modelDisplayMode}`)}
                   </Text>
                   <RowRightArrow />
                 </XStack>

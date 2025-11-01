@@ -1,5 +1,7 @@
 import { ThemeMode } from '@/types'
 
+export type ModelDisplayMode = 'full' | 'icon'
+
 export type PreferenceDefaultScopeType = PreferenceSchemas['default']
 export type PreferenceKeyType = keyof PreferenceDefaultScopeType
 
@@ -20,6 +22,7 @@ export interface PreferenceSchemas {
 
     // UI Configuration
     'ui.theme_mode': ThemeMode
+    'ui.model_display_mode': ModelDisplayMode
 
     // Topic State
     'topic.current_id': string

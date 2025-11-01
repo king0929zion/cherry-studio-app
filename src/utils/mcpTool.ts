@@ -1,4 +1,4 @@
-import { ContentBlockParam, MessageParam, ToolUnion, ToolUseBlock } from '@anthropic-ai/sdk/resources'
+﻿import { ContentBlockParam, MessageParam, ToolUnion, ToolUseBlock } from '@anthropic-ai/sdk/resources'
 import { Content, FunctionCall, Part, Tool, Type as GeminiSchemaType } from '@google/genai'
 import OpenAI from 'openai'
 import {
@@ -10,6 +10,14 @@ import {
 
 import { isFunctionCallingModel, isVisionModel } from '@/config/models'
 import { loggerService } from '@/services/LoggerService'
+import { mcpClientManager } from '@/services/McpClientManager'
+import { mcpService } from '@/services/McpService'
+import {
+  deleteSandboxEntry,
+  listSandboxEntries,
+  readSandboxFile,
+  writeSandboxFile
+} from '@/services/McpFileSandbox'
 import { Assistant, Model } from '@/types/assistant'
 import { ChunkType, MCPToolCompleteChunk, MCPToolInProgressChunk, MCPToolPendingChunk } from '@/types/chunk'
 import { MCPCallToolResponse, MCPServer, MCPToolResponse, ToolUseResponse } from '@/types/mcp'
@@ -18,6 +26,7 @@ import { MCPTool } from '@/types/tool'
 
 import { isToolUseModeFunction } from './assistants'
 import { filterProperties, processSchemaForO3 } from './mcpSchema'
+import { formatMcpError } from './error'
 const logger = loggerService.withContext('Utils:MCPTools')
 
 export function mcpToolsToOpenAIResponseTools(mcpTools: MCPTool[]): OpenAI.Responses.Tool[] {
@@ -94,7 +103,10 @@ export function openAIToolsToMcpTool(
 }
 
 export async function callBuiltInTool(toolResponse: MCPToolResponse): Promise<MCPCallToolResponse | undefined> {
-  logger.info(`[BuiltIn] Calling Built-in Tool: ${toolResponse.tool.name}`, toolResponse.tool)
+      logger.info(
+    `Calling MCP tool: ${toolResponse.tool.serverName ?? 'unknown'}/${toolResponse.tool.name}`,
+    toolResponse.arguments
+  )
 
   if (toolResponse.tool.name === 'think') {
     const thought = toolResponse.arguments?.thought
@@ -109,6 +121,91 @@ export async function callBuiltInTool(toolResponse: MCPToolResponse): Promise<MC
     }
   }
 
+  if (toolResponse.tool.serverName === '@cherry/files') {
+    const args = (toolResponse.arguments as Record<string, any>) ?? {}
+
+    try {
+      switch (toolResponse.tool.name) {
+        case 'ListSandboxFiles': {
+          const entries = await listSandboxEntries(typeof args.path === 'string' ? args.path : undefined)
+          return {
+            isError: false,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(entries, null, 2)
+              }
+            ]
+          }
+        }
+        case 'ReadSandboxFile': {
+          if (typeof args.path !== 'string' || args.path.length === 0) {
+            throw new Error('璇诲彇鏂囦欢闇€瑕佹彁渚涙湁鏁堢殑 path 鍙傛暟')
+          }
+
+          const content = await readSandboxFile(args.path)
+          return {
+            isError: false,
+            content: [
+              {
+                type: 'text',
+                text: content
+              }
+            ]
+          }
+        }
+        case 'WriteSandboxFile': {
+          if (typeof args.path !== 'string' || args.path.length === 0) {
+            throw new Error('WriteSandboxFile requires a valid path')
+          }
+          if (typeof args.content !== 'string') {
+            throw new Error('WriteSandboxFile requires string content')
+          }
+
+          await writeSandboxFile(args.path, args.content)
+          return {
+            isError: false,
+            content: [
+              {
+                type: 'text',
+                text: 'Saved file: ' + args.path
+              }
+            ]
+          }
+        }
+        case 'DeleteSandboxEntry': {
+          if (typeof args.path !== 'string' || args.path.length === 0) {
+            throw new Error('DeleteSandboxEntry requires a valid path')
+          }
+
+          await deleteSandboxEntry(args.path)
+          return {
+            isError: false,
+            content: [
+              {
+                type: 'text',
+                text: 'Deleted: ' + args.path
+              }
+            ]
+          }
+        }
+        default:
+          throw new Error('Unsupported sandbox tool: ' + toolResponse.tool.name)
+      }
+    } catch (error) {
+      logger.error('MCP sandbox tool error', error as Error)
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: formatMcpError(error)
+          }
+        ]
+      }
+    }
+  }
+
   return undefined
 }
 
@@ -117,60 +214,71 @@ export async function callMCPTool(
   topicId?: string,
   modelName?: string
 ): Promise<MCPCallToolResponse> {
-  throw new Error('Not implemented')
-  // logger.info(`Calling Tool: ${toolResponse.tool.serverName} ${toolResponse.tool.name}`, toolResponse.tool)
+      logger.info(
+    `Calling MCP tool: ${toolResponse.tool.serverName ?? 'unknown'}/${toolResponse.tool.name}`,
+    toolResponse.arguments
+  )
 
-  // try {
-  //   const server = getMcpServerByTool(toolResponse.tool)
+  if (!toolResponse.tool.serverId) {
+    return {
+      isError: true,
+      content: [
+        {
+          type: 'text',
+          text: 'Tool is missing associated MCP server information.'
+        }
+      ]
+    }
+  }
 
-  //   if (!server) {
-  //     throw new Error(`Server not found: ${toolResponse.tool.serverName}`)
-  //   }
+  try {
+    let server = getMcpServerByTool(toolResponse.tool)
 
-  //   const resp = await window.api.mcp.callTool(
-  //     {
-  //       server,
-  //       name: toolResponse.tool.name,
-  //       args: toolResponse.arguments,
-  //       callId: toolResponse.id
-  //     },
-  //     topicId ? currentSpan(topicId, modelName)?.spanContext() : undefined
-  //   )
+    if (!server) {
+      server = await mcpService.getMcpServer(toolResponse.tool.serverId)
+    }
 
-  //   if (toolResponse.tool.serverName === BuiltinMCPServerNames.mcpAutoInstall) {
-  //     if (resp.data) {
-  //       const mcpServer: MCPServer = {
-  //         id: `f${nanoid()}`,
-  //         name: resp.data.name,
-  //         description: resp.data.description,
-  //         baseUrl: resp.data.baseUrl,
-  //         command: resp.data.command,
-  //         args: resp.data.args,
-  //         env: resp.data.env,
-  //         registryUrl: '',
-  //         isActive: false,
-  //         provider: 'CherryAI'
-  //       }
-  //       store.dispatch(addMCPServer(mcpServer))
-  //     }
-  //   }
+    if (!server) {
+      throw new Error(`MCP server not found: ${toolResponse.tool.serverName ?? toolResponse.tool.serverId}`)
+    }
 
-  //   logger.info(`Tool called: ${toolResponse.tool.serverName} ${toolResponse.tool.name}`, resp)
-  //   return resp
-  // } catch (e) {
-  //   logger.error(`Error calling Tool: ${toolResponse.tool.serverName} ${toolResponse.tool.name}`, e as Error)
-  //   return Promise.resolve({
-  //     isError: true,
-  //     content: [
-  //       {
-  //         type: 'text',
-  //         text: `Error calling tool ${toolResponse.tool.name}: ${e instanceof Error ? e.stack || e.message || 'No error details available' : JSON.stringify(e)}`
-  //       }
-  //     ]
-  //   })
-  // }
+    if (server.type === 'inMemory') {
+      throw new Error(`Built-in MCP tool should use callBuiltInTool: ${toolResponse.tool.name}`)
+    }
+
+    if (!server.isActive) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: 'MCP server is disabled. Please enable it in the MCP market before retrying.'
+          }
+        ]
+      }
+    }
+
+    const response = await mcpClientManager.callTool(
+      server,
+      toolResponse.tool.id || toolResponse.tool.name,
+      toolResponse.arguments ?? undefined
+    )
+
+    return response
+  } catch (error) {
+    logger.error('MCP tool invocation failed', error as Error)
+
+    return {
+      isError: true,
+      content: [
+        {
+          type: 'text',
+          text: formatMcpError(error)
+        }
+      ]
+    }
+  }
 }
-
 export function mcpToolsToAnthropicTools(mcpTools: MCPTool[]): ToolUnion[] {
   return mcpTools.map(tool => {
     const t: ToolUnion = {
@@ -312,9 +420,12 @@ export function filterMCPTools(
 }
 
 export function getMcpServerByTool(tool: MCPTool) {
-  throw new Error('Function not implemented.')
-  // const servers = store.getState().mcp.servers
-  // return servers.find(s => s.id === tool.serverId)
+  if (!tool.serverId) {
+    return undefined
+  }
+
+  const server = mcpService.getMcpServerCached(tool.serverId)
+  return server ?? undefined
 }
 
 export function isToolAutoApproved(tool: MCPTool, server?: MCPServer): boolean {
@@ -335,13 +446,13 @@ export function parseToolUse(
     return []
   }
 
-  // 支持两种格式：
-  // 1. 完整的 <tool_use></tool_use> 标签包围的内容
-  // 2. 只有内部内容（从 TagExtractor 提取出来的）
+  // 鏀寔涓ょ鏍煎紡锛?
+  // 1. 瀹屾暣鐨?<tool_use></tool_use> 鏍囩鍖呭洿鐨勫唴瀹?
+  // 2. 鍙湁鍐呴儴鍐呭锛堜粠 TagExtractor 鎻愬彇鍑烘潵鐨勶級
 
   let contentToProcess = content
 
-  // 如果内容不包含 <tool_use> 标签，说明是从 TagExtractor 提取的内部内容，需要包装
+  // 濡傛灉鍐呭涓嶅寘鍚?<tool_use> 鏍囩锛岃鏄庢槸浠?TagExtractor 鎻愬彇鐨勫唴閮ㄥ唴瀹癸紝闇€瑕佸寘瑁?
   if (!content.includes('<tool_use>')) {
     contentToProcess = `<tool_use>\n${content}\n</tool_use>`
   }
@@ -415,11 +526,11 @@ export function mcpToolCallResponseToOpenAICompatibleMessage(
             content += (item.text || 'no content') + '\n'
             break
           case 'image':
-            // NOTE: 假设兼容模式下支持解析base64图片，虽然我觉得应该不支持
+            // NOTE: 鍋囪鍏煎妯″紡涓嬫敮鎸佽В鏋恇ase64鍥剧墖锛岃櫧鐒舵垜瑙夊緱搴旇涓嶆敮鎸?
             content += `Here is a image result: data:${item.mimeType};base64,${item.data}\n`
             break
           case 'audio':
-            // NOTE: 假设兼容模式下支持解析base64音频，虽然我觉得应该不支持
+            // NOTE: 鍋囪鍏煎妯″紡涓嬫敮鎸佽В鏋恇ase64闊抽锛岃櫧鐒舵垜瑙夊緱搴旇涓嶆敮鎸?
             content += `Here is a audio result: data:${item.mimeType};base64,${item.data}\n`
             break
           default:
@@ -808,13 +919,13 @@ export function mcpToolCallResponseToAwsBedrockMessage(
         }
       }
     } else {
-      // 对于非视觉模型，将所有内容合并为文本
+      // 瀵逛簬闈炶瑙夋ā鍨嬶紝灏嗘墍鏈夊唴瀹瑰悎骞朵负鏂囨湰
       const textContent = resp.content
         .map(item => {
           if (item.type === 'text') {
             return item.text
           } else {
-            // 对于非文本内容，尝试转换为JSON格式
+            // 瀵逛簬闈炴枃鏈唴瀹癸紝灏濊瘯杞崲涓篔SON鏍煎紡
             try {
               return JSON.stringify(item)
             } catch {
@@ -844,9 +955,9 @@ export function mcpToolCallResponseToAwsBedrockMessage(
 }
 
 /**
- * 是否启用工具使用(function call)
+ * 鏄惁鍚敤宸ュ叿浣跨敤(function call)
  * @param assistant
- * @returns 是否启用工具使用
+ * @returns 鏄惁鍚敤宸ュ叿浣跨敤
  */
 export function isSupportedToolUse(assistant: Assistant) {
   if (assistant.model) {
@@ -857,10 +968,23 @@ export function isSupportedToolUse(assistant: Assistant) {
 }
 
 /**
- * 是否使用提示词工具使用
+ * 鏄惁浣跨敤鎻愮ず璇嶅伐鍏蜂娇鐢?
  * @param assistant
- * @returns 是否使用提示词工具使用
+ * @returns 鏄惁浣跨敤鎻愮ず璇嶅伐鍏蜂娇鐢?
  */
 export function isPromptToolUse(assistant: Assistant) {
   return assistant.settings?.toolUseMode === 'prompt'
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

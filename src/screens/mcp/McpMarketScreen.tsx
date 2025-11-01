@@ -1,5 +1,5 @@
 import { Container, DrawerGestureWrapper, HeaderBar, SafeAreaContainer, SearchInput } from '@/componentsV2'
-import { Menu } from '@/componentsV2/icons'
+import { Menu, Plus } from '@/componentsV2/icons'
 import React, { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, View } from 'react-native'
@@ -31,6 +31,10 @@ export function McpMarketScreen() {
     navigation.dispatch(DrawerActions.openDrawer())
   }
 
+  const handleCreateServer = () => {
+    navigation.navigate('Mcp', { screen: 'McpServerEditorScreen' })
+  }
+
   const handleMcpServerItemPress = (mcp: MCPServer) => {
     setSelectedMcp(mcp)
     bottomSheetRef.current?.present()
@@ -52,6 +56,10 @@ export function McpMarketScreen() {
             leftButton={{
               icon: <Menu size={24} />,
               onPress: handleMenuPress
+            }}
+            rightButton={{
+              icon: <Plus size={22} />,
+              onPress: handleCreateServer
             }}
           />
           <Container className="py-0 gap-2.5">

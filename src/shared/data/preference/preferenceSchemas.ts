@@ -4,9 +4,9 @@
  * This file defines all user preferences and their default values.
  * Preferences are stored in the SQLite database and can be synchronized across devices.
  *
- * Total preference items: 10
+ * Total preference items: 11
  * - User configuration: 3
- * - UI configuration: 1
+ * - UI configuration: 2
  * - Topic state: 1
  * - Web search configuration: 4
  * - App state: 2
@@ -38,6 +38,11 @@ export const DefaultPreferences: PreferenceSchemas = {
     // - dark: Dark theme
     // - system: Follow system theme preference
     'ui.theme_mode': ThemeMode.system,
+
+    // Chat input model display preference
+    // - full: Show model icon and full name
+    // - icon: Only show model icon
+    'ui.model_display_mode': 'full',
 
     // === Topic State ===
     // Currently active conversation topic ID
@@ -76,6 +81,7 @@ export const PreferenceDescriptions: Record<keyof PreferenceSchemas['default'], 
   'user.name': 'User display name',
   'user.id': 'Unique user identifier (UUID)',
   'ui.theme_mode': 'Application theme mode (light/dark/system)',
+  'ui.model_display_mode': 'Chat input model display preference (full/icon)',
   'topic.current_id': 'Currently active conversation topic ID',
   'websearch.search_with_time': 'Add current date to search queries for recent results',
   'websearch.max_results': 'Maximum number of search results (1-20)',

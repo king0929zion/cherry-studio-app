@@ -48,7 +48,7 @@ export const SystemTools: React.FC<SystemToolsProps> = ({ onCameraPress, onImage
       {options.map(option => (
         <Button
           key={option.key}
-          className="flex-1 aspect-[1.618] flex-col items-center justify-center gap-2 rounded-lg bg-gray-20"
+          className="flex-1 aspect-square flex-col items-center justify-center gap-2 rounded-2xl bg-gray-20"
           onPress={option.onPress}>
           {option.icon}
           <Button.Label>
