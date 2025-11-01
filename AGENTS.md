@@ -113,6 +113,7 @@
     - **自动构建 Android APK**（使用 EAS Build）
   - 禁用 immutable lockfile 模式（添加环境变量 `YARN_ENABLE_IMMUTABLE_INSTALLS: false`）
   - Android 构建异步执行，不等待完成
+  - EXPO_TOKEN 已配置，Android 自动构建已启用
   
 - **发布构建**：
   - Android 和 iOS 的发布 workflow（通过 tag 触发）
