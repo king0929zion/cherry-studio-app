@@ -86,6 +86,19 @@
     - `src/componentsV2/features/Sheet/ToolSheet/SystemTools.tsx`
     - `src/screens/settings/general/ModelDisplaySettingsScreen.tsx`
 
+### CI/CD 配置（完成）
+- **持续集成 (CI)**：
+  - 新增 `.github/workflows/ci.yml` 配置文件
+  - 在每次推送到 main 分支时自动运行代码检查
+  - 包含类型检查、代码规范检查、格式检查、国际化检查
+  - 验证构建是否成功（prebuild Android）
+  
+- **发布构建**：
+  - 已有 Android 和 iOS 的发布 workflow
+  - 通过创建 tag（如 `v1.0.0`）触发自动构建和发布
+  - 使用 EAS Build 构建应用
+  - 自动创建 GitHub Release
+
 ## 尚待完成/注意事项
 
 1. ~~聊天输入中模型展示模式偏好尚未接入 UI~~（✅ 已完成）
