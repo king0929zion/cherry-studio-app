@@ -1,7 +1,7 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import React, { useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, TouchableOpacity } from 'react-native'
+import { Keyboard } from 'react-native'
 
 import { AtSign } from '@/componentsV2/icons/LucideIcon'
 import { ModelIcon } from '@/componentsV2/icons'
@@ -11,6 +11,7 @@ import XStack from '@/componentsV2/layout/XStack'
 import Text from '@/componentsV2/base/Text'
 import ModelSheet from '../../Sheet/ModelSheet'
 import { usePreference } from '@/hooks/usePreference'
+import AnimatedButton from '@/componentsV2/base/AnimatedButton'
 
 interface MentionButtonProps {
   mentions: Model[]
@@ -94,9 +95,9 @@ const MentionButtonComponent: React.FC<MentionButtonProps> = ({ mentions, setMen
 
   return (
     <>
-      <TouchableOpacity style={{ maxWidth: BUTTON_STYLES.maxWidth }} onPress={handlePress} hitSlop={5}>
+      <AnimatedButton style={{ maxWidth: BUTTON_STYLES.maxWidth }} onPress={handlePress}>
         {renderButtonContent}
-      </TouchableOpacity>
+      </AnimatedButton>
 
       <ModelSheet ref={bottomSheetModalRef} mentions={mentions} setMentions={handleModelChange} multiple={true} />
     </>

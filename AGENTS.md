@@ -86,6 +86,24 @@
     - `src/componentsV2/features/Sheet/ToolSheet/SystemTools.tsx`
     - `src/screens/settings/general/ModelDisplaySettingsScreen.tsx`
 
+### 动效优化（完成）
+- **统一动画配置**：
+  - 创建 `src/config/animations.ts` 统一管理动画参数
+  - 定义弹性动画配置（轻微弹性、舒适流畅）
+  - 配置缓动曲线和时长常量
+  
+- **按压动画**：
+  - 创建 `AnimatedButton` 组件，提供丝滑的弹性按压反馈
+  - 优化 `PressableRow` 组件，添加弹性缩放动画
+  - 为 `MentionButton` 添加按压动画效果
+  - 动画参数：缩放至 0.95，使用弹性回弹（damping: 15, stiffness: 400）
+  
+- **动画特性**：
+  - 使用 `react-native-reanimated` 实现高性能动画
+  - 轻微弹性效果，给人舒适自然的感觉
+  - 快速响应（200ms），平滑过渡
+  - 支持禁用动画选项（disableAnimation prop）
+
 ### CI/CD 配置（完成）
 - **持续集成 (CI)**：
   - 新增 `.github/workflows/ci.yml` 配置文件
