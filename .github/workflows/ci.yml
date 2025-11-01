@@ -98,3 +98,65 @@ jobs:
           echo "## CI Check Failed ❌" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Some checks failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    needs: build-check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.10.3 --activate
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Install dependencies
+        run: yarn install
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
+
+      - name: Build Android APK
+        id: build_android
+        run: |
+          echo "Building Android APK..."
+          eas build --platform android --profile production --non-interactive --no-wait --json > android_build.json
+          BUILD_ID=$(cat android_build.json | jq -r '.[0].id')
+          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "🤖 Android Build ID: $BUILD_ID"
+          echo "🔗 View build: https://expo.dev/accounts/[your-account]/projects/cherry-studio/builds/$BUILD_ID"
+
+      - name: Build Summary
+        if: success()
+        run: |
+          echo "## Android Build Started! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🤖 Android" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build ID**: \`${{ steps.build_android.outputs.build_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: 🏗️ Building on EAS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Details**: [View on Expo](https://expo.dev/accounts/[your-account]/projects/cherry-studio/builds/${{ steps.build_android.outputs.build_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Note" >> $GITHUB_STEP_SUMMARY
+          echo "Build is running in the background. Check Expo dashboard for progress." >> $GITHUB_STEP_SUMMARY
+
+      - name: Build Failure Summary
+        if: failure()
+        run: |
+          echo "## Android Build Failed ❌" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Failed to start Android build. Please check the logs above." >> $GITHUB_STEP_SUMMARY
