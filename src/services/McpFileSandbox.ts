@@ -4,13 +4,25 @@ import { loggerService } from '@/services/LoggerService'
 
 const logger = loggerService.withContext('McpFileSandbox')
 
-const SANDBOX_ROOT = `${FileSystem.documentDirectory ?? ''}mcp-sandbox`
+const getSandboxRoot = async () => {
+  const docDir = FileSystem.documentDirectory
+  if (!docDir) {
+    throw new Error('文档目录不可用')
+  }
+  return `${docDir}mcp-sandbox`
+}
+
+let SANDBOX_ROOT: string | null = null
 
 async function ensureSandboxRoot() {
+  if (!SANDBOX_ROOT) {
+    SANDBOX_ROOT = await getSandboxRoot()
+  }
   const info = await FileSystem.getInfoAsync(SANDBOX_ROOT)
   if (!info.exists) {
     await FileSystem.makeDirectoryAsync(SANDBOX_ROOT, { intermediates: true })
   }
+  return SANDBOX_ROOT
 }
 
 function sanitizeRelativePath(relativePath?: string) {
@@ -28,9 +40,9 @@ function sanitizeRelativePath(relativePath?: string) {
 }
 
 async function resolveAbsolutePath(relativePath?: string) {
-  await ensureSandboxRoot()
+  const root = await ensureSandboxRoot()
   const sanitized = sanitizeRelativePath(relativePath)
-  return sanitized ? `${SANDBOX_ROOT}/${sanitized}` : SANDBOX_ROOT
+  return sanitized ? `${root}/${sanitized}` : root
 }
 
 export async function listSandboxEntries(relativePath?: string) {
@@ -55,8 +67,8 @@ export async function listSandboxEntries(relativePath?: string) {
         name: entryName,
         type: entryInfo.isDirectory ? 'directory' : 'file',
         size: entryInfo.size ?? 0,
-        modified: entryInfo.modificationTime
-          ? new Date(entryInfo.modificationTime * 1000).toISOString()
+        modified: (entryInfo as any).modificationTime
+          ? new Date((entryInfo as any).modificationTime * 1000).toISOString()
           : undefined
       }
     })
@@ -73,25 +85,20 @@ export async function readSandboxFile(relativePath: string) {
     throw new Error('文件不存在或路径指向目录')
   }
 
-  return await FileSystem.readAsStringAsync(targetPath, {
-    encoding: FileSystem.EncodingType.UTF8
-  })
+  return await FileSystem.readAsStringAsync(targetPath)
 }
 
 export async function writeSandboxFile(relativePath: string, content: string) {
   const targetPath = await resolveAbsolutePath(relativePath)
   const parentSegments = sanitizeRelativePath(relativePath).split('/')
   parentSegments.pop()
-  const parentPath = parentSegments.length > 0 ? `${SANDBOX_ROOT}/${parentSegments.join('/')}` : SANDBOX_ROOT
-
-  await ensureSandboxRoot()
-  if (parentPath !== SANDBOX_ROOT) {
+  const root = await ensureSandboxRoot()
+  const parentPath = parentSegments.length > 0 ? `${root}/${parentSegments.join('/')}` : root
+  if (parentPath !== root) {
     await FileSystem.makeDirectoryAsync(parentPath, { intermediates: true })
   }
 
-  await FileSystem.writeAsStringAsync(targetPath, content, {
-    encoding: FileSystem.EncodingType.UTF8
-  })
+  await FileSystem.writeAsStringAsync(targetPath, content)
 
   logger.debug(`Sandbox file saved: ${targetPath}`)
 }

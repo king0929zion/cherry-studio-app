@@ -34,10 +34,6 @@ export abstract class MixedBaseAPIClient extends BaseApiClient {
   protected abstract defaultClient: OpenAIAPIClient
   protected abstract currentClient: BaseApiClient
 
-  constructor(provider: Provider) {
-    super(provider)
-  }
-
   override getBaseURL(): string {
     if (!this.currentClient) {
       return this.provider.apiHost

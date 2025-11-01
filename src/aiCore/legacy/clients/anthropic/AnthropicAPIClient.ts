@@ -76,9 +76,6 @@ export class AnthropicAPIClient extends BaseApiClient<
   oauthToken: string | undefined = undefined
   isOAuthMode: boolean = false
   sdkInstance: Anthropic | undefined = undefined
-  constructor(provider: Provider) {
-    super(provider)
-  }
 
   async getSdkInstance(): Promise<Anthropic> {
     if (this.sdkInstance) {
@@ -140,7 +137,7 @@ export class AnthropicAPIClient extends BaseApiClient<
       ]
     }
 
-    if (system[0].text.trim() != defaultClaudeCodeSystem) {
+    if (system[0].text.trim() !== defaultClaudeCodeSystem) {
       system.unshift({
         type: 'text',
         text: defaultClaudeCodeSystem
@@ -174,7 +171,7 @@ export class AnthropicAPIClient extends BaseApiClient<
 
   // @ts-ignore sdk未提供
 
-  override async generateImage(generateImageParams: GenerateImageParams): Promise<string[]> {
+  override async generateImage(_generateImageParams: GenerateImageParams): Promise<string[]> {
     return []
   }
 

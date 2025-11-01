@@ -1,10 +1,11 @@
-import { Client } from '@modelcontextprotocol/sdk/client'
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp'
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse'
-import { CallToolResultSchema, CompatibilityCallToolResultSchema } from '@modelcontextprotocol/sdk/types'
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
+import { CompatibilityCallToolResultSchema } from '@modelcontextprotocol/sdk/types.js'
 
 import { loggerService } from '@/services/LoggerService'
-import { MCPCallToolResponse, MCPServer, MCPTool, MCPToolResultContent } from '@/types/mcp'
+import { MCPCallToolResponse, MCPServer, MCPToolResultContent } from '@/types/mcp'
+import type { MCPTool } from '@/types/tool'
 
 const logger = loggerService.withContext('McpClientManager')
 
@@ -82,9 +83,7 @@ function normalizeContentBlock(block: any): MCPToolResultContent | undefined {
           uri: block.resource?.uri,
           text: block.resource?.text,
           mimeType: block.resource?.mimeType,
-          blob: block.resource?.blob,
-          name: block.resource?.name,
-          description: block.resource?.description
+          blob: block.resource?.blob
         }
       }
     case 'resource_link':
@@ -93,9 +92,7 @@ function normalizeContentBlock(block: any): MCPToolResultContent | undefined {
         resource: {
           uri: block.uri,
           text: block.text,
-          mimeType: block.mimeType,
-          name: block.name,
-          description: block.description
+          mimeType: block.mimeType
         }
       }
     default:

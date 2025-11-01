@@ -68,9 +68,6 @@ export class GeminiAPIClient extends BaseApiClient<
   GeminiSdkToolCall,
   Tool
 > {
-  constructor(provider: Provider) {
-    super(provider)
-  }
 
   override async createCompletions(payload: GeminiSdkParams, options?: GeminiOptions): Promise<GeminiSdkRawOutput> {
     const sdk = await this.getSdkInstance()
@@ -196,7 +193,7 @@ export class GeminiAPIClient extends BaseApiClient<
    * @param file - The file
    * @returns The part
    */
-  private async handlePdfFile(file: FileMetadata): Promise<Part> {
+  private async handlePdfFile(_file: FileMetadata): Promise<Part> {
     throw new Error('PDF file handling not implemented')
     // const smallFileSize = 20 * MB
     // const isSmallFile = file.size < smallFileSize
