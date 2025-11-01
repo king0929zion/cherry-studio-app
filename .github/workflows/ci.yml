@@ -119,7 +119,19 @@ jobs:
           corepack enable
           corepack prepare yarn@4.10.3 --activate
 
+      - name: Check EXPO_TOKEN
+        id: check_token
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "⚠️ EXPO_TOKEN is not configured. Skipping Android build."
+          else
+            echo "has_token=true" >> $GITHUB_OUTPUT
+            echo "✅ EXPO_TOKEN is configured."
+          fi
+
       - name: Setup Expo and EAS
+        if: steps.check_token.outputs.has_token == 'true'
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
@@ -127,11 +139,13 @@ jobs:
           packager: npm
 
       - name: Install dependencies
+        if: steps.check_token.outputs.has_token == 'true'
         run: yarn install
         env:
           YARN_ENABLE_IMMUTABLE_INSTALLS: false
 
       - name: Build Android APK
+        if: steps.check_token.outputs.has_token == 'true'
         id: build_android
         run: |
           echo "Building Android APK..."
@@ -142,7 +156,7 @@ jobs:
           echo "🔗 View build: https://expo.dev/accounts/[your-account]/projects/cherry-studio/builds/$BUILD_ID"
 
       - name: Build Summary
-        if: success()
+        if: steps.check_token.outputs.has_token == 'true' && success()
         run: |
           echo "## Android Build Started! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -154,8 +168,27 @@ jobs:
           echo "### 📝 Note" >> $GITHUB_STEP_SUMMARY
           echo "Build is running in the background. Check Expo dashboard for progress." >> $GITHUB_STEP_SUMMARY
 
+      - name: Token Not Configured
+        if: steps.check_token.outputs.has_token == 'false'
+        run: |
+          echo "## ⚠️ Android Build Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Android build was skipped because \`EXPO_TOKEN\` is not configured." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 To enable automatic Android builds:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to [Expo Access Tokens](https://expo.dev/accounts/[your-account]/settings/access-tokens)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Create a new access token" >> $GITHUB_STEP_SUMMARY
+          echo "3. Add it to GitHub Secrets:" >> $GITHUB_STEP_SUMMARY
+          echo "   - Go to: Settings → Secrets and variables → Actions" >> $GITHUB_STEP_SUMMARY
+          echo "   - Click 'New repository secret'" >> $GITHUB_STEP_SUMMARY
+          echo "   - Name: \`EXPO_TOKEN\`" >> $GITHUB_STEP_SUMMARY
+          echo "   - Value: [paste your token]" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📚 [Learn more about Expo tokens](https://docs.expo.dev/accounts/programmatic-access/)" >> $GITHUB_STEP_SUMMARY
+
       - name: Build Failure Summary
-        if: failure()
+        if: steps.check_token.outputs.has_token == 'true' && failure()
         run: |
           echo "## Android Build Failed ❌" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
